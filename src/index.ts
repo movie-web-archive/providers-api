@@ -10,11 +10,14 @@ import { ZodError } from 'zod';
 import { mediaSchema } from '@/schema';
 import { validateTurnstile } from '@/turnstile';
 
+// hono doesn't export this type, so we retrieve it from a function
+type SSEStreamingApi = Parameters<Parameters<typeof streamSSE>['1']>['0'];
+
 const app = new Hono();
 
 let eventId = 0;
 async function writeSSEEvent(
-  stream: Parameters<Parameters<typeof streamSSE>['1']>['0'],
+  stream: SSEStreamingApi,
   event: string,
   data: any | undefined,
 ) {
