@@ -9,7 +9,7 @@ import {
 import { ZodError, z } from 'zod';
 
 const app = new Hono();
-let id = 0;
+let eventId = 0;
 
 const fetcher = makeStandardFetcher(fetch);
 
@@ -26,11 +26,11 @@ async function outputEvent(
   return await stream.writeSSE({
     event,
     data: JSON.stringify(data),
-    id: String(id++),
+    id: String(eventId++),
   });
 }
 
-const tmdbIdSchema = z.string().regex(/^\d+$/)
+const tmdbIdSchema = z.string().regex(/^\d+$/);
 
 const mediaSchema = z
   .discriminatedUnion('type', [
@@ -71,39 +71,39 @@ const mediaSchema = z
   });
 
 async function validateTurnstile(context: Context<Env>) {
-  const turnstileSecret = context.env?.TURNSTILE_SECRET as string | undefined
+  const turnstileSecret = context.env?.TURNSTILE_SECRET as string | undefined;
 
-  const token = context.req.header("cf-turnstile-token") || ""
+  const token = context.req.header('cf-turnstile-token') || '';
 
   // TODO: Make this cross platform
-	const ip = context.req.header('CF-Connecting-IP') || "";
+  const ip = context.req.header('CF-Connecting-IP') || '';
 
   const formData = new FormData();
-	formData.append('secret', turnstileSecret || "");
-	formData.append('response', token);
-	formData.append('remoteip', ip);
+  formData.append('secret', turnstileSecret || '');
+  formData.append('response', token);
+  formData.append('remoteip', ip);
 
   const url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-	const result = await fetch(url, {
-		body: formData,
-		method: 'POST',
-	});
+  const result = await fetch(url, {
+    body: formData,
+    method: 'POST',
+  });
 
-	const outcome = await result.json<any>();
-	return outcome.success
-} 
+  const outcome = await result.json<any>();
+  return outcome.success;
+}
 
 app.get('/scrape', async (context) => {
   const queryParams = context.req.query();
 
-  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED)
+  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
 
   if (turnstileEnabled) {
-    const success = await validateTurnstile(context)
+    const success = await validateTurnstile(context);
 
     if (!success) {
-      context.status(401)
-      return context.text("Turnstile invalid")
+      context.status(401);
+      return context.text('Turnstile invalid');
     }
   }
 
@@ -142,7 +142,7 @@ app.get('/scrape', async (context) => {
       return await outputEvent(stream, 'completed', output);
     }
 
-    stream.writeSSE({ event: 'noOutput', data: '', id: String(id++) });
+    stream.writeSSE({ event: 'noOutput', data: '', id: String(eventId++) });
   });
 });
 
