@@ -11,15 +11,8 @@ import { mediaSchema } from '@/schema';
 import { validateTurnstile } from '@/turnstile';
 
 const app = new Hono();
+
 let eventId = 0;
-
-const fetcher = makeStandardFetcher(fetch);
-
-const providers = makeProviders({
-  fetcher,
-  target: targets.NATIVE,
-});
-
 async function writeSSEEvent(
   stream: Parameters<Parameters<typeof streamSSE>['1']>['0'],
   event: string,
@@ -61,6 +54,13 @@ app.get('/scrape', async (context) => {
     context.status(500);
     return context.text('An error has occurred!');
   }
+
+  const fetcher = makeStandardFetcher(fetch);
+
+  const providers = makeProviders({
+    fetcher,
+    target: targets.NATIVE,
+  });
 
   return streamSSE(context, async (stream) => {
     const output = await providers.runAll({
