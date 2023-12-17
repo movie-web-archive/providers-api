@@ -90,7 +90,10 @@ async function validateTurnstile(context: Context<Env>) {
   });
 
   const outcome = await result.json<any>();
-  return outcome.success;
+  return {
+    success: outcome.success as boolean,
+    errorCodes: outcome['error-codes'] as string[],
+  };
 }
 
 app.get('/scrape', async (context) => {
@@ -99,11 +102,15 @@ app.get('/scrape', async (context) => {
   const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
 
   if (turnstileEnabled) {
-    const success = await validateTurnstile(context);
+    const turnstileResponse = await validateTurnstile(context);
 
-    if (!success) {
+    if (!turnstileResponse.success) {
       context.status(401);
-      return context.text('Turnstile invalid');
+      return context.text(
+        `Turnstile invalid, error codes: ${turnstileResponse.errorCodes.join(
+          ', ',
+        )}`,
+      );
     }
   }
 
