@@ -1,19 +1,43 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
+import { cors } from 'hono/cors';
 import {
   ScrapeMedia,
   makeProviders,
   makeStandardFetcher,
   targets,
 } from '@movie-web/providers';
-import { ZodError } from 'zod';
-import { mediaSchema } from '@/schema';
+import { ZodError, z } from 'zod';
+import { embedSchema, scrapeAllSchema, sourceSchema } from '@/schema';
 import { validateTurnstile } from '@/turnstile';
 
 // hono doesn't export this type, so we retrieve it from a function
 type SSEStreamingApi = Parameters<Parameters<typeof streamSSE>['1']>['0'];
 
+const fetcher = makeStandardFetcher(fetch);
+
+const providers = makeProviders({
+  fetcher,
+  target: targets.BROWSER,
+});
+
 const app = new Hono();
+
+app.use('*', (context, next) => {
+  const allowedCorsHosts = ((context.env?.CORS_ALLOWED as string) ?? '').split(
+    ',',
+  );
+
+  return cors({
+    origin: (origin) => {
+      const hostname = new URL(origin).hostname;
+      if (allowedCorsHosts.includes(hostname)) {
+        return origin;
+      }
+      return '';
+    },
+  })(context, next);
+});
 
 let eventId = 0;
 async function writeSSEEvent(
@@ -48,7 +72,7 @@ app.get('/scrape', async (context) => {
 
   let media: ScrapeMedia;
   try {
-    media = mediaSchema.parse(queryParams);
+    media = scrapeAllSchema.parse(queryParams);
   } catch (e) {
     if (e instanceof ZodError) {
       context.status(400);
@@ -57,13 +81,6 @@ app.get('/scrape', async (context) => {
     context.status(500);
     return context.text('An error has occurred!');
   }
-
-  const fetcher = makeStandardFetcher(fetch);
-
-  const providers = makeProviders({
-    fetcher,
-    target: targets.NATIVE,
-  });
 
   return streamSSE(context, async (stream) => {
     const output = await providers.runAll({
@@ -90,6 +107,108 @@ app.get('/scrape', async (context) => {
 
     return await writeSSEEvent(stream, 'noOutput', '');
   });
+});
+
+app.get('/scrape/embed', async (context) => {
+  const queryParams = context.req.query();
+
+  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
+
+  if (turnstileEnabled) {
+    const turnstileResponse = await validateTurnstile(context);
+
+    if (!turnstileResponse.success) {
+      context.status(401);
+      return context.text(
+        `Turnstile invalid, error codes: ${turnstileResponse.errorCodes.join(
+          ', ',
+        )}`,
+      );
+    }
+  }
+
+  let embedInput: z.infer<typeof embedSchema>;
+  try {
+    embedInput = embedSchema.parse(queryParams);
+  } catch (e) {
+    if (e instanceof ZodError) {
+      context.status(400);
+      return context.json(e.format());
+    }
+    context.status(500);
+    return context.text('An error has occurred!');
+  }
+
+  return streamSSE(context, async (stream) => {
+    const output = await providers.runEmbedScraper({
+      id: embedInput.id,
+      url: embedInput.url,
+      events: {
+        update(evt) {
+          writeSSEEvent(stream, 'update', evt);
+        },
+      },
+    });
+
+    if (output) {
+      return await writeSSEEvent(stream, 'completed', output);
+    }
+
+    return await writeSSEEvent(stream, 'noOutput', '');
+  });
+});
+
+app.get('/scrape/embed', async (context) => {
+  const queryParams = context.req.query();
+
+  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
+
+  if (turnstileEnabled) {
+    const turnstileResponse = await validateTurnstile(context);
+
+    if (!turnstileResponse.success) {
+      context.status(401);
+      return context.text(
+        `Turnstile invalid, error codes: ${turnstileResponse.errorCodes.join(
+          ', ',
+        )}`,
+      );
+    }
+  }
+
+  let sourceInput: z.infer<typeof sourceSchema>;
+  try {
+    sourceInput = sourceSchema.parse(queryParams);
+  } catch (e) {
+    if (e instanceof ZodError) {
+      context.status(400);
+      return context.json(e.format());
+    }
+    context.status(500);
+    return context.text('An error has occurred!');
+  }
+
+  return streamSSE(context, async (stream) => {
+    const output = await providers.runSourceScraper({
+      id: sourceInput.id,
+      media: sourceInput,
+      events: {
+        update(evt) {
+          writeSSEEvent(stream, 'update', evt);
+        },
+      },
+    });
+
+    if (output) {
+      return await writeSSEEvent(stream, 'completed', output);
+    }
+
+    return await writeSSEEvent(stream, 'noOutput', '');
+  });
+});
+
+app.get('/metadata', async (context) => {
+  return context.json([providers.listEmbeds(), providers.listSources()]);
 });
 
 export default app;

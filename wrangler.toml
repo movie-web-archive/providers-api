@@ -4,5 +4,6 @@ workers_dev = true
 compatibility_date = "2023-12-17"
 
 [vars]
-TURNSTILE_ENABLED = true
+TURNSTILE_ENABLED = false
 TURNSTILE_SECRET = "1x0000000000000000000000000000000AA"
+CORS_ALLOWED = "localhost,movie-web.app,dev.movie-web.app"

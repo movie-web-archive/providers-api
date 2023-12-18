@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const tmdbIdSchema = z.string().regex(/^\d+$/);
 
-export const mediaSchema = z
+export const scrapeAllSchema = z
   .discriminatedUnion('type', [
     z.object({
       type: z.literal('movie'),
@@ -39,3 +39,14 @@ export const mediaSchema = z
       },
     };
   });
+
+export const embedSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+});
+
+export const sourceSchema = scrapeAllSchema.and(
+  z.object({
+    id: z.string(),
+  }),
+);
