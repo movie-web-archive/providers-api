@@ -2,13 +2,18 @@
   "name": "providers-api",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
+    "build": "wrangler deploy --dry-run --outdir dist",
     "dev": "wrangler dev src/index.ts",
     "deploy": "wrangler deploy --minify src/index.ts",
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
     "@movie-web/providers": "^1.1.5",
+    "@tsndr/cloudflare-worker-jwt": "^2.3.2",
+    "@types/jsonwebtoken": "^9.0.5",
+    "esbuild": "^0.19.10",
     "hono": "^3.11.8",
     "zod": "^3.22.4"
   },

@@ -62,6 +62,8 @@ app.get('/scrape', async (context) => {
 
   const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
 
+  let jwtResponse: string | undefined = undefined;
+
   if (turnstileEnabled) {
     const turnstileResponse = await validateTurnstile(context);
 
@@ -73,6 +75,8 @@ app.get('/scrape', async (context) => {
         )}`,
       );
     }
+
+    jwtResponse = turnstileResponse.jwtToken;
   }
 
   let media: ScrapeMedia;
@@ -88,6 +92,10 @@ app.get('/scrape', async (context) => {
   }
 
   return streamSSE(context, async (stream) => {
+    if (jwtResponse) {
+      await writeSSEEvent(stream, 'token', jwtResponse);
+    }
+
     try {
       const output = await providers.runAll({
         media,
@@ -130,6 +138,8 @@ app.get('/scrape/embed', async (context) => {
 
   const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
 
+  let jwtResponse: string | undefined = undefined;
+
   if (turnstileEnabled) {
     const turnstileResponse = await validateTurnstile(context);
 
@@ -141,6 +151,8 @@ app.get('/scrape/embed', async (context) => {
         )}`,
       );
     }
+
+    jwtResponse = turnstileResponse.jwtToken;
   }
 
   let embedInput: z.infer<typeof embedSchema>;
@@ -156,6 +168,9 @@ app.get('/scrape/embed', async (context) => {
   }
 
   return streamSSE(context, async (stream) => {
+    if (jwtResponse) {
+      await writeSSEEvent(stream, 'token', jwtResponse);
+    }
     try {
       const output = await providers.runEmbedScraper({
         id: embedInput.id,
@@ -190,6 +205,8 @@ app.get('/scrape/source', async (context) => {
 
   const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
 
+  let jwtResponse: string | undefined = undefined;
+
   if (turnstileEnabled) {
     const turnstileResponse = await validateTurnstile(context);
 
@@ -201,6 +218,8 @@ app.get('/scrape/source', async (context) => {
         )}`,
       );
     }
+
+    jwtResponse = turnstileResponse.jwtToken;
   }
 
   let sourceInput: z.infer<typeof sourceSchema>;
@@ -216,6 +235,9 @@ app.get('/scrape/source', async (context) => {
   }
 
   return streamSSE(context, async (stream) => {
+    if (jwtResponse) {
+      await writeSSEEvent(stream, 'token', jwtResponse);
+    }
     try {
       const output = await providers.runSourceScraper({
         id: sourceInput.id,
