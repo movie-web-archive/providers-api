@@ -88,29 +88,40 @@ app.get('/scrape', async (context) => {
   }
 
   return streamSSE(context, async (stream) => {
-    const output = await providers.runAll({
-      media,
-      events: {
-        discoverEmbeds(evt) {
-          writeSSEEvent(stream, 'discoverEmbeds', evt);
+    try {
+      const output = await providers.runAll({
+        media,
+        events: {
+          discoverEmbeds(evt) {
+            writeSSEEvent(stream, 'discoverEmbeds', evt);
+          },
+          init(evt) {
+            writeSSEEvent(stream, 'init', evt);
+          },
+          start(evt) {
+            writeSSEEvent(stream, 'start', evt);
+          },
+          update(evt) {
+            writeSSEEvent(stream, 'update', evt);
+          },
         },
-        init(evt) {
-          writeSSEEvent(stream, 'init', evt);
-        },
-        start(evt) {
-          writeSSEEvent(stream, 'start', evt);
-        },
-        update(evt) {
-          writeSSEEvent(stream, 'update', evt);
-        },
-      },
-    });
+      });
 
-    if (output) {
-      return await writeSSEEvent(stream, 'completed', output);
+      if (output) {
+        await writeSSEEvent(stream, 'completed', output);
+        return await stream.close();
+      }
+
+      await writeSSEEvent(stream, 'noOutput', '');
+      return await stream.close();
+    } catch (e: any) {
+      await writeSSEEvent(stream, 'error', {
+        name: e.name,
+        message: e.message,
+        stack: e.stack,
+      });
+      return await stream.close();
     }
-
-    return await writeSSEEvent(stream, 'noOutput', '');
   });
 });
 
@@ -145,25 +156,36 @@ app.get('/scrape/embed', async (context) => {
   }
 
   return streamSSE(context, async (stream) => {
-    const output = await providers.runEmbedScraper({
-      id: embedInput.id,
-      url: embedInput.url,
-      events: {
-        update(evt) {
-          writeSSEEvent(stream, 'update', evt);
+    try {
+      const output = await providers.runEmbedScraper({
+        id: embedInput.id,
+        url: embedInput.url,
+        events: {
+          update(evt) {
+            writeSSEEvent(stream, 'update', evt);
+          },
         },
-      },
-    });
+      });
 
-    if (output) {
-      return await writeSSEEvent(stream, 'completed', output);
+      if (output) {
+        await writeSSEEvent(stream, 'completed', output);
+        return await stream.close();
+      }
+
+      await writeSSEEvent(stream, 'noOutput', '');
+      return await stream.close();
+    } catch (e: any) {
+      await writeSSEEvent(stream, 'error', {
+        name: e.name,
+        message: e.message,
+        stack: e.stack,
+      });
+      return await stream.close();
     }
-
-    return await writeSSEEvent(stream, 'noOutput', '');
   });
 });
 
-app.get('/scrape/embed', async (context) => {
+app.get('/scrape/source', async (context) => {
   const queryParams = context.req.query();
 
   const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
@@ -194,21 +216,32 @@ app.get('/scrape/embed', async (context) => {
   }
 
   return streamSSE(context, async (stream) => {
-    const output = await providers.runSourceScraper({
-      id: sourceInput.id,
-      media: sourceInput,
-      events: {
-        update(evt) {
-          writeSSEEvent(stream, 'update', evt);
+    try {
+      const output = await providers.runSourceScraper({
+        id: sourceInput.id,
+        media: sourceInput,
+        events: {
+          update(evt) {
+            writeSSEEvent(stream, 'update', evt);
+          },
         },
-      },
-    });
+      });
 
-    if (output) {
-      return await writeSSEEvent(stream, 'completed', output);
+      if (output) {
+        await writeSSEEvent(stream, 'completed', output);
+        return await stream.close();
+      }
+
+      await writeSSEEvent(stream, 'noOutput', '');
+      return await stream.close();
+    } catch (e: any) {
+      await writeSSEEvent(stream, 'error', {
+        name: e.name,
+        message: e.message,
+        stack: e.stack,
+      });
+      return await stream.close();
     }
-
-    return await writeSSEEvent(stream, 'noOutput', '');
   });
 });
 
