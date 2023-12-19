@@ -30,11 +30,16 @@ app.use('*', (context, next) => {
 
   return cors({
     origin: (origin) => {
-      const hostname = new URL(origin).hostname;
-      if (allowedCorsHosts.includes(hostname)) {
-        return origin;
+      try {
+        const hostname = new URL(origin).hostname;
+        if (allowedCorsHosts.includes(hostname)) {
+          return origin;
+        }
+        return '';
+      } catch (_) {
+        // If the Origin URL is not valid, return empty allowed origin
+        return '';
       }
-      return '';
     },
   })(context, next);
 });
