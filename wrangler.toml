@@ -1,0 +1,4 @@
+name = "providers-api"
+main = "./src/index.ts"
+workers_dev = true
+compatibility_date = "2023-12-17"
