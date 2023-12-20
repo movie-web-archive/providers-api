@@ -24,7 +24,7 @@ const providers = makeProviders({
 const app = new Hono();
 
 function isTurnstileEnabled(context: Context<Env>) {
-  return (context.env?.TURNSTILE_ENABLED ?? "true") === "true"
+  return context.env?.TURNSTILE_ENABLED === "true"
 }
 
 app.use('*', (context, next) => {
