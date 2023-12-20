@@ -7,13 +7,10 @@ export async function validateTurnstile(context: Context<Env>) {
 
   const token = context.req.query('token') || '';
 
-  // TODO: Make this cross platform
   const ip = context.req.header('CF-Connecting-IP') || '';
 
   if (token.startsWith('jwt|')) {
     try {
-      console.log(token, token.slice('jwt|'.length));
-
       const isValid = await jsonwebtoken.verify(
         token.slice('jwt|'.length),
         jwtSecret,

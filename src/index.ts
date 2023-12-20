@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Context, Env, Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { cors } from 'hono/cors';
 import {
@@ -22,6 +22,10 @@ const providers = makeProviders({
 });
 
 const app = new Hono();
+
+function isTurnstileEnabled(context: Context<Env>) {
+  return (context.env?.TURNSTILE_ENABLED ?? "true") === "true"
+}
 
 app.use('*', (context, next) => {
   const allowedCorsHosts = ((context.env?.CORS_ALLOWED as string) ?? '').split(
@@ -60,11 +64,9 @@ async function writeSSEEvent(
 app.get('/scrape', async (context) => {
   const queryParams = context.req.query();
 
-  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
-
   let jwtResponse: string | undefined = undefined;
 
-  if (turnstileEnabled) {
+  if (isTurnstileEnabled(context)) {
     const turnstileResponse = await validateTurnstile(context);
 
     if (!turnstileResponse.success) {
@@ -136,11 +138,9 @@ app.get('/scrape', async (context) => {
 app.get('/scrape/embed', async (context) => {
   const queryParams = context.req.query();
 
-  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
-
   let jwtResponse: string | undefined = undefined;
 
-  if (turnstileEnabled) {
+  if (isTurnstileEnabled(context)) {
     const turnstileResponse = await validateTurnstile(context);
 
     if (!turnstileResponse.success) {
@@ -203,11 +203,9 @@ app.get('/scrape/embed', async (context) => {
 app.get('/scrape/source', async (context) => {
   const queryParams = context.req.query();
 
-  const turnstileEnabled = Boolean(context.env?.TURNSTILE_ENABLED);
-
   let jwtResponse: string | undefined = undefined;
 
-  if (turnstileEnabled) {
+  if (isTurnstileEnabled(context)) {
     const turnstileResponse = await validateTurnstile(context);
 
     if (!turnstileResponse.success) {
