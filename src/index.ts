@@ -61,7 +61,7 @@ async function writeSSEEvent(
   });
 }
 
-function stringifyError(err: any): any {
+function makeErrorDto(err: any): any {
   return err ? { name: err.name, message: err.message, stack: err.stack } : undefined;
 }
 
@@ -119,7 +119,7 @@ app.get('/scrape', async (context) => {
             const err = evt.error as any;
             writeSSEEvent(stream, 'update', {
               ...evt,
-              error: stringifyError(evt.error),
+              error: makeErrorDto(evt.error),
             });
           },
         },
@@ -133,7 +133,7 @@ app.get('/scrape', async (context) => {
       await writeSSEEvent(stream, 'noOutput', '');
       return await stream.close();
     } catch (e: any) {
-      await writeSSEEvent(stream, 'error', stringifyError(e) ?? {});
+      await writeSSEEvent(stream, 'error', makeErrorDto(e) ?? {});
       return await stream.close();
     }
   });
@@ -183,7 +183,7 @@ app.get('/scrape/embed', async (context) => {
           update(evt) {
             writeSSEEvent(stream, 'update', {
               ...evt,
-              error: stringifyError(evt.error),
+              error: makeErrorDto(evt.error),
             });
           },
         },
@@ -197,7 +197,7 @@ app.get('/scrape/embed', async (context) => {
       await writeSSEEvent(stream, 'noOutput', '');
       return await stream.close();
     } catch (e: any) {
-      await writeSSEEvent(stream, 'error', stringifyError(e) ?? {});
+      await writeSSEEvent(stream, 'error', makeErrorDto(e) ?? {});
       return await stream.close();
     }
   });
@@ -247,7 +247,7 @@ app.get('/scrape/source', async (context) => {
           update(evt) {
             writeSSEEvent(stream, 'update', {
               ...evt,
-              error: stringifyError(evt.error),
+              error: makeErrorDto(evt.error),
             });
           },
         },
@@ -261,7 +261,7 @@ app.get('/scrape/source', async (context) => {
       await writeSSEEvent(stream, 'noOutput', '');
       return await stream.close();
     } catch (e: any) {
-      await writeSSEEvent(stream, 'error', stringifyError(e) ?? {});
+      await writeSSEEvent(stream, 'error', makeErrorDto(e) ?? {});
       return await stream.close();
     }
   });
