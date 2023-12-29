@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@movie-web/providers':
-    specifier: ^1.1.5
-    version: 1.1.5
+    specifier: ^2.0.1
+    version: 2.0.1
   '@tsndr/cloudflare-worker-jwt':
     specifier: ^2.3.2
     version: 2.3.2
@@ -623,8 +623,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@movie-web/providers@1.1.5:
-    resolution: {integrity: sha512-JnqU6nVsEZ83UVcsizqzcr/vtwvHHlZt9vYwGiJEAyaUgaXJPZz3C90qzaRZ8CVWydUTRAmjRP3daRFtC1nKHw==}
+  /@movie-web/providers@2.0.1:
+    resolution: {integrity: sha512-PB1OxSsm4zwD6fuWBCmuqwMpt1UnlKssVZ8jGl6gHioS9/qFXR9Rsd8SnWISQWxF6lVRUp0DBXHfCrXGY/jwhA==}
     dependencies:
       cheerio: 1.0.0-rc.12
       crypto-js: 4.2.0
