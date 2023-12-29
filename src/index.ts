@@ -61,6 +61,10 @@ async function writeSSEEvent(
   });
 }
 
+function stringifyError(err: any): any {
+  return err ? { name: err.name, message: err.message, stack: err.stack } : undefined;
+}
+
 app.get('/scrape', async (context) => {
   const queryParams = context.req.query();
 
@@ -112,7 +116,11 @@ app.get('/scrape', async (context) => {
             writeSSEEvent(stream, 'start', evt);
           },
           update(evt) {
-            writeSSEEvent(stream, 'update', evt);
+            const err = evt.error as any;
+            writeSSEEvent(stream, 'update', {
+              ...evt,
+              error: stringifyError(evt.error),
+            });
           },
         },
       });
@@ -125,11 +133,7 @@ app.get('/scrape', async (context) => {
       await writeSSEEvent(stream, 'noOutput', '');
       return await stream.close();
     } catch (e: any) {
-      await writeSSEEvent(stream, 'error', {
-        name: e.name,
-        message: e.message,
-        stack: e.stack,
-      });
+      await writeSSEEvent(stream, 'error', stringifyError(e) ?? {});
       return await stream.close();
     }
   });
@@ -177,7 +181,10 @@ app.get('/scrape/embed', async (context) => {
         url: embedInput.url,
         events: {
           update(evt) {
-            writeSSEEvent(stream, 'update', evt);
+            writeSSEEvent(stream, 'update', {
+              ...evt,
+              error: stringifyError(evt.error),
+            });
           },
         },
       });
@@ -190,11 +197,7 @@ app.get('/scrape/embed', async (context) => {
       await writeSSEEvent(stream, 'noOutput', '');
       return await stream.close();
     } catch (e: any) {
-      await writeSSEEvent(stream, 'error', {
-        name: e.name,
-        message: e.message,
-        stack: e.stack,
-      });
+      await writeSSEEvent(stream, 'error', stringifyError(e) ?? {});
       return await stream.close();
     }
   });
@@ -242,7 +245,10 @@ app.get('/scrape/source', async (context) => {
         media: sourceInput,
         events: {
           update(evt) {
-            writeSSEEvent(stream, 'update', evt);
+            writeSSEEvent(stream, 'update', {
+              ...evt,
+              error: stringifyError(evt.error),
+            });
           },
         },
       });
@@ -255,11 +261,7 @@ app.get('/scrape/source', async (context) => {
       await writeSSEEvent(stream, 'noOutput', '');
       return await stream.close();
     } catch (e: any) {
-      await writeSSEEvent(stream, 'error', {
-        name: e.name,
-        message: e.message,
-        stack: e.stack,
-      });
+      await writeSSEEvent(stream, 'error', stringifyError(e) ?? {});
       return await stream.close();
     }
   });
