@@ -3,23 +3,14 @@ import { streamSSE } from 'hono/streaming';
 import { cors } from 'hono/cors';
 import {
   ScrapeMedia,
-  makeProviders,
-  makeStandardFetcher,
-  targets,
 } from '@movie-web/providers';
 import { ZodError, z } from 'zod';
 import { embedSchema, scrapeAllSchema, sourceSchema } from '@/schema';
 import { validateTurnstile } from '@/turnstile';
+import { getProviders } from '@/providers';
 
 // hono doesn't export this type, so we retrieve it from a function
 type SSEStreamingApi = Parameters<Parameters<typeof streamSSE>['1']>['0'];
-
-const fetcher = makeStandardFetcher(fetch);
-
-const providers = makeProviders({
-  fetcher,
-  target: targets.BROWSER,
-});
 
 const app = new Hono();
 
@@ -103,7 +94,7 @@ app.get('/scrape', async (context) => {
     }
 
     try {
-      const output = await providers.runAll({
+      const output = await getProviders(context).runAll({
         media,
         events: {
           discoverEmbeds(evt) {
@@ -176,7 +167,7 @@ app.get('/scrape/embed', async (context) => {
       await writeSSEEvent(stream, 'token', jwtResponse);
     }
     try {
-      const output = await providers.runEmbedScraper({
+      const output = await getProviders(context).runEmbedScraper({
         id: embedInput.id,
         url: embedInput.url,
         events: {
@@ -240,7 +231,7 @@ app.get('/scrape/source', async (context) => {
       await writeSSEEvent(stream, 'token', jwtResponse);
     }
     try {
-      const output = await providers.runSourceScraper({
+      const output = await getProviders(context).runSourceScraper({
         id: sourceInput.id,
         media: sourceInput,
         events: {
@@ -268,7 +259,7 @@ app.get('/scrape/source', async (context) => {
 });
 
 app.get('/metadata', async (context) => {
-  return context.json([providers.listEmbeds(), providers.listSources()]);
+  return context.json([getProviders(context).listEmbeds(), getProviders(context).listSources()]);
 });
 
 export default app;
