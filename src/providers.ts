@@ -1,11 +1,12 @@
 import { makeProviders, makeSimpleProxyFetcher, makeStandardFetcher, targets, Fetcher as RealFetcher } from "@movie-web/providers";
 import { Context, Env } from "hono";
 
-const specialDomains = ["showbox.shegu.net", "mbpapi.shegu.net"]
 const standardFetcher = makeStandardFetcher(fetch);
 
 export function getProviders(context: Context<Env>) {
   const proxyUrl = (context.env?.PROXY_URL as string | undefined) ?? '';
+  const specialDomainsEnv = (context.env?.PROXIED_DOMAINS as string | undefined) ?? '';
+  const specialDomains = specialDomainsEnv.split(",").map(v=>v.trim()).filter(v=>v.length>0);
 
   const fetcher: RealFetcher = (u,ops) => {
     const url = new URL(u);
