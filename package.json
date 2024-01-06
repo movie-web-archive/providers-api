@@ -10,7 +10,7 @@
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
-    "@movie-web/providers": "^2.0.3",
+    "@movie-web/providers": "^2.0.4",
     "@tsndr/cloudflare-worker-jwt": "^2.3.2",
     "@types/jsonwebtoken": "^9.0.5",
     "esbuild": "^0.19.10",
